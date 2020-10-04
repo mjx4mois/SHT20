@@ -9,19 +9,19 @@
 #define __SHT20_HEADER__  
 
 /*--------------------------------- Define SLAVE ADDRESS -------------------------------------*/
-// SHT20 SLAVE ADDRESS
-#define SHT20_SLAVE_ADDRESS 				0x80	//the Same Slv Addr with HTU21D , SI7021
+/* SHT20 SLAVE ADDRESS*/
+#define SHT20_SLAVE_ADDRESS 				(0x80)	/*the Same Slv Addr with HTU21D , SI7021*/
 /*--------------------------------- Define SLAVE ADDRESS -------------------------------------*/
 
 
 /* ------------- DEFINE SHT20 REGISTER  ------------*/
 /* USE NO HOLD MASTER REGISTER ! --> if CHANGE to HOLD MASTER see SPEC!*/
-//#define SHT20_HOLD_MASTER_TEMP			0xE3
-//#define SHT20_HOLD_MASTER_HUM			0xE5
-#define SHT20_NO_HOLD_MASTER_TEMP		0xF3
-#define SHT20_NO_HOLD_MASTER_HUM		0xF5
-#define SHT20_WRITE_USER_REG				0xE6
-#define SHT20_READ_USER_REG				0xE7
+//#define SHT20_HOLD_MASTER_TEMP			(0xE3)
+//#define SHT20_HOLD_MASTER_HUM			(0xE5)
+#define SHT20_NO_HOLD_MASTER_TEMP		(0xF3)
+#define SHT20_NO_HOLD_MASTER_HUM		(0xF5)
+#define SHT20_WRITE_USER_REG				(0xE6)
+#define SHT20_READ_USER_REG				(0xE7)
 /*
 	resolution set   (def:00)
 	bit 7		bit0		RH			Temp		   mode*
@@ -39,12 +39,12 @@
 	--------------------------
 	bit 1 Disable OTP reload	 (def:1)	
 */																
-#define SHT20_SOFT_RST						0xFE		/*after command -> 15mS wait sensor reset ok!*/
+#define SHT20_SOFT_RST						(0xFE)		/*after command -> 15mS wait sensor reset ok!*/
 /*------------- DEFINE SHT20 REGISTER  ------------*/
 
 
 /*------------- DEFINE SHT20 STRUCT ------------*/
-#define SHT20_USER_REG_DEFAULT 0x02
+#define SHT20_USER_REG_DEFAULT 			(0x02)
 /*--------------------------------*/
 /*
 	SET BIT7 & BIT 0
@@ -98,7 +98,7 @@ typedef enum{
 /* ------------- DEFINE HTU21D STRUCT ------------*/
 
 
-//********************************************* SYSTEM *************************************************
+/********************************************** SYSTEM **************************************************/
 /*--------------------------------------------------------------------------------------------------*/
 /* initial SHT20 */
 /* -> set Temperature/Humidity resoluction   ; default mode 0  // Humidity -> 12bit  ; Temperature -> 14bit */
@@ -226,6 +226,6 @@ CHAR8S SHT20_CRC_CHECKSUM(CHAR8U *data, CHAR8U bytes,CHAR8U checksum);
 /* wait measurement time*/
 void SHT20_WAIT(CHAR8U wait_time);
 /*--------------------------------------------------------------------------------------------------*/
-//********************************************* SYSTEM *************************************************
+/********************************************** SYSTEM **************************************************/
 
-#endif 		//#ifndef __SHT20_HEADER__ 
+#endif 		/*#ifndef __SHT20_HEADER__*/

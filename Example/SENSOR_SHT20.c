@@ -4,19 +4,19 @@
      File Name		: SENSOR_SHT20.c
      Function		: SENSOR_SHT20
      Create Date	: 2017/07/19
----------------------------------------------------------------------- */
-#ifndef __SHT20_FUNCTION__
-#define __SHT20_FUNCTION__  
+---------------------------------------------------------------------- */  
 
 #include <stdio.h>
 #include <math.h>
 #include <delay.h>
 #include <i2c.h>
+#include <datatype_Layer.h>
+#include <swi2c_Layer.h>
 #include "SENSOR_SHT20.h"
-#include "Porting_Layer.h"
 
 
-//********************************************* SYSTEM *************************************************
+
+/********************************************** SYSTEM **************************************************/
 /*--------------------------------------------------------------------------------------------------*/
 /* 
 	initial SHT20 
@@ -27,13 +27,18 @@ CHAR8S SHT20_INIT(void)
 {
 	CHAR8S status = 0;
 
-	status = SHT20_WRITE_MODE(SHT20_MODE0) ; /* mode 0 , Humidity -> 12bit  ; Temperature -> 14bit */
-	if(status !=0)return -1;	/*write mode fail*/
+		status = SHT20_WRITE_MODE(SHT20_MODE0) ; /* mode 0 , Humidity -> 12bit  ; Temperature -> 14bit */
+		if(status !=0)
+		{
+			return -1;	/*write mode fail*/
+		}
 
-	status = SHT20_DIS_HEAT_IC();	/*dis HEAD IC.*/
-	if(status!=0)return -1;		/* dis HEAD IC fail.*/
-
-	return 0;	/*initial SHT20 success !!*/
+		status = SHT20_DIS_HEAT_IC();	/*dis HEAD IC.*/
+		if(status!=0)
+		{
+			return -1;		/* dis HEAD IC fail.*/
+		}
+		return 0;	/*initial SHT20 success !!*/
 
 }
 /*--------------------------------------------------------------------------------------------------*/
@@ -44,40 +49,38 @@ CHAR8S SHT20_WRITE_COMMAND(CHAR8U command)
 
 	CHAR8S ack=0,busy=0;
 
-	busy = i2c_start();
-	if(busy)
-	{
-           ack=i2c_write( SHT20_SLAVE_ADDRESS | WRITE_BIT);
-           if(ack == 1)
-            {
-             ack=i2c_write(command);		
-                 if(ack == 1)
-                   {
-                        i2c_stop();
-                        delay_us(10);
-                        return SWI2C_STATUS_OK;
-                 	}
-                   else
-                   {
-                        printf("register error\r\n");
-                        goto EXIT;
-                   }
-            }
-            else
-            {
-                printf("address error\r\n");
-                goto EXIT;
-
-            }
-     }
-     else
-     {
-    EXIT:
-         i2c_stop();
-         delay_us(10);
-         return SWI2C_STATUS_FAIL;
-     }
-
+		busy = i2c_start();
+		if(busy)
+		{
+           		ack=i2c_write( SHT20_SLAVE_ADDRESS | WRITE_BIT);
+           		if(ack == 1)
+            		{
+             			ack=i2c_write(command);		
+                 		if(ack == 1)
+                   		{
+                        		i2c_stop();
+                        		delay_us(10);
+                        		return SWI2C_STATUS_OK;
+                 		}
+                   		else
+                   		{
+                        		printf("register error\r\n");
+                        		goto EXIT;
+                   		}
+            		}
+            		else
+            		{
+                		printf("address error\r\n");
+                		goto EXIT;
+            		}
+     		}
+     		else
+     		{
+    			EXIT:
+         				i2c_stop();
+         				delay_us(10);
+         				return SWI2C_STATUS_FAIL;
+    		}
 }
 /*--------------------------------------------------------------------------------------------------*/
 /*--------------------------------------------------------------------------------------------------*/
@@ -88,56 +91,53 @@ CHAR8S SHT20_READ_COMMAND(CHAR8U *r_data_stream)
 	CHAR8S ack=0,busy=0,data_number;
 	CHAR8U n_byte = 3;
 
-      if(n_byte>255){
+      		if(n_byte>255)
+		{
                     return SWI2C_STATUS_FAIL;	/*over max set 255 !!*/
-                    }
+		}
 
-                 busy = i2c_start();	
-                         if(busy)
-                           {
-                         	ack = i2c_write(SHT20_SLAVE_ADDRESS | READ_BIT);
-                           if(ack == 1)
-                                 {
+ 		busy = i2c_start();	
+		if(busy)
+		{
+			ack = i2c_write(SHT20_SLAVE_ADDRESS | READ_BIT);
+			if(ack == 1)
+			{
+				for(data_number=0;data_number<n_byte;data_number++)
+				{
+					if(data_number == n_byte)
+					{
+						r_data_stream[data_number] = i2c_read(MASTER_NACK);
+						delay_us(3);	/*a little delay.*/
+						break;
 
-					for(data_number=0;data_number<n_byte;data_number++)
-					    {
-
-						if(data_number == n_byte)
-							{
-
-							r_data_stream[data_number] = i2c_read(MASTER_NACK);
-							delay_us(3);	/*a little delay.*/
-							break;
-
-							}
-						else
-							{
-
-							 r_data_stream[data_number] = i2c_read(MASTER_ACK);
-							 delay_us(3);	/* a little delay.*/
-
-							}
-					     }
-						      /* ALL read finish!! */
-			                           i2c_stop();
-			                           delay_us(10);
-			                           return SWI2C_STATUS_OK;
-
-                              	}
+					}
 					else
-                           		{
-                             	printf("address error\r\n");
-                             	goto EXIT;
-                            	}
-                     	}        
-     				else
-		    		{
+					{
+						r_data_stream[data_number] = i2c_read(MASTER_ACK);
+						delay_us(3);	/* a little delay.*/
+
+					}
+				}
+				
+				/* ALL read finish!! */
+				i2c_stop();
+				delay_us(10);
+				return SWI2C_STATUS_OK;
+
+			}
+			else
+			{
+				printf("address error\r\n");
+				goto EXIT;
+			}
+		}        
+		else
+		{
 		    	EXIT:
 			         i2c_stop();
 			         delay_us(10);
 				  return SWI2C_STATUS_FAIL;
-		     }
-
+		}
 
 }
 /*--------------------------------------------------------------------------------------------------*/
@@ -151,9 +151,12 @@ CHAR8S SHT20_RESET(void)
 {
 	CHAR8S status = 0;
 
-	 status = SHT20_WRITE_COMMAND(SHT20_SOFT_RST);
-	 if(status!=1)return -1;	/*reset fail. */
-	 return 0;	/* reset success !*/
+		status = SHT20_WRITE_COMMAND(SHT20_SOFT_RST);
+		if(status!=1)
+		{
+		 	return -1;	/*reset fail. */
+		}
+		return 0;	/* reset success !*/
 	 
 }
 /*--------------------------------------------------------------------------------------------------*/
@@ -184,53 +187,61 @@ CHAR8S SHT20_RESET(void)
 /*TEMPERATURME FORMULA =  -46.85 + 175.72 *( sample_T / 2^(sample bit)  ) , sample bit = resolution bit   , sample_RH = Read Value */
 CHAR8S SHT20_READ_TEMPERATURE(FLOAT *t,CHAR8U mode)
 {
-		CHAR8S status = 0 ;
-		CHAR8U cnt = 0,read_data[2] = {0};
+	CHAR8S status = 0 ;
+	CHAR8U cnt = 0,read_data[2] = {0};
 
-		INT16U temp_data = 0;  /* unsigned? YES */
-		FLOAT temperautre = 0.0;
+	INT16U temp_data = 0;  /* unsigned? YES */
+	FLOAT temperautre = 0.0;
 
 		/* check mode */
-		if(mode !=SHT20_MODE0  && mode !=SHT20_MODE1 && mode !=SHT20_MODE2 &&mode !=SHT20_MODE3  )return -1;	/*error mode value*/
-
+		if(mode !=SHT20_MODE0  && mode !=SHT20_MODE1 && mode !=SHT20_MODE2 &&mode !=SHT20_MODE3  )
+		{
+			return -1;	/*error mode value*/
+		}
+		
 		/* command -> Temperature */ 
 		status = SHT20_WRITE_COMMAND(SHT20_NO_HOLD_MASTER_TEMP);
-		if(status!=1) return -1;	/*  write command fail.*/
-
+		if(status!=1)
+		{
+			return -1;	/*  write command fail.*/
+		}
 		/* delay for temperature delay */
 		switch(mode)
-			{
-				case  SHT20_MODE0:
+		{
+			case  SHT20_MODE0:
 									SHT20_WAIT(SHT20_T_14BIT_DELAY);
-										break;					
-				case  SHT20_MODE1:
+									break;					
+			case  SHT20_MODE1:
 									SHT20_WAIT(SHT20_T_13BIT_DELAY);
-										break;					
-				case  SHT20_MODE2:
+									break;					
+			case  SHT20_MODE2:
 									SHT20_WAIT(SHT20_T_12BIT_DELAY);
-										break;										
-				case  SHT20_MODE3:
+									break;										
+			case  SHT20_MODE3:
 									SHT20_WAIT(SHT20_T_11BIT_DELAY);
-										break;
-			}
+									break;
+		}
 		
 		/* check & re-try measurement ok? */
 		/* re-try = 4 */
 		for(cnt=0;cnt<4;cnt++)
-			{
+		{
 			
-				status = SHT20_READ_COMMAND(&read_data[0]);;
-				if(status!=1)/* return NACK , SHT20 busy */
-					{
-						SHT20_WAIT(5);	/* delay 5mS	; unit : 1mS */
-					}
-				else 
-					{
-					 	break;	/* read success!*/
-					}
+			status = SHT20_READ_COMMAND(&read_data[0]);;
+			if(status!=1)/* return NACK , SHT20 busy */
+			{
+				SHT20_WAIT(5);	/* delay 5mS	; unit : 1mS */
 			}
-			if(status!=1) return -1; 	/* re-try 4  -> all read fail !. */
+			else 
+			{
+			 	break;	/* read success!*/
+			}
+		}		
 
+		if(status!=1) 
+		{
+			return -1; 	/* re-try 4  -> all read fail !. */
+		}
 	
 
 		/* read_data[0] -> first byte MSB */
@@ -238,12 +249,18 @@ CHAR8S SHT20_READ_TEMPERATURE(FLOAT *t,CHAR8U mode)
 		/* read_data[2] -> CRC byte */
 
 		/*check read_data[1] bit 1 = 0 ?  , if bit =1 -> humidity , 0 -> temperature*/
-		if((read_data[1] & 0x02)!=0) return -2;	/*This is not temperature value*/
+		if((read_data[1] & 0x02)!=0) 
+		{
+			return -2;	/*This is not temperature value*/
+		}
 
 		/* check CRC code */	
 		status = SHT20_CRC_CHECKSUM(&read_data[0],2,read_data[2]);
-		if(status!=0) return -3;		/* CRC code match error!!*/
-
+		if(status!=0)
+		{
+			return -3;		/* CRC code match error!!*/
+		}
+		
 		/* calculate the temperature value.*/
 		/* 16bit value , MSB << left 8*/
 		temp_data = (read_data[0] << 8) |(read_data[1] & 0xFC) ; /* 0xFC mask bit 1 & bit 0 */
@@ -285,56 +302,63 @@ CHAR8S SHT20_READ_TEMPERATURE(FLOAT *t,CHAR8U mode)
 /*HUMIDITY FORMULA = -6 + 125 *( sample_RH  / 2^(sample bit)   )   , sample bit = resolution bit   , sample_RH = Read Value */
 CHAR8S SHT20_READ_HUMIDITY(FLOAT *h,CHAR8U mode)
 {
-		CHAR8S status = 0 ;
-		CHAR8U cnt = 0,read_data[2] = {0};
+	CHAR8S status = 0 ;
+	CHAR8U cnt = 0,read_data[2] = {0};
 
-		INT16U humidity_data = 0;  /* unsigned? YES */
-		FLOAT humidity = 0.0;
+	INT16U humidity_data = 0;  /* unsigned? YES */
+	FLOAT humidity = 0.0;
 
 		/* check mode */
-		if(mode !=SHT20_MODE0 &&mode !=SHT20_MODE1  && mode !=SHT20_MODE2  && mode !=SHT20_MODE3  )return -1;	/*error mode value*/
-
+		if(mode !=SHT20_MODE0 &&mode !=SHT20_MODE1  && mode !=SHT20_MODE2  && mode !=SHT20_MODE3  )
+		{
+			return -1;	/*error mode value*/
+		}
 
 		/* command -> Humidity*/
 		status = SHT20_WRITE_COMMAND(SHT20_NO_HOLD_MASTER_HUM);
-		if(status!=1) return -1;	/*write command fail.*/
-
+		if(status!=1) 
+		{
+			return -1;	/*write command fail.*/
+		}
 
 		/* delay for humidity delay */
 		switch(mode)
-			{
+		{
 
-				case  SHT20_MODE0:
-										SHT20_WAIT(SHT20_RH_12BIT_DELAY);
-										break;					
-				case  SHT20_MODE1:
-										SHT20_WAIT(SHT20_RH_8BIT_DELAY);
-										break;					
-				case  SHT20_MODE2:
-										SHT20_WAIT(SHT20_RH_10BIT_DELAY);
-										break;										
-				case  SHT20_MODE3:
-										SHT20_WAIT(SHT20_RH_11BIT_DELAY);
-										break;
-			}
+			case  SHT20_MODE0:
+									SHT20_WAIT(SHT20_RH_12BIT_DELAY);
+									break;					
+			case  SHT20_MODE1:
+									SHT20_WAIT(SHT20_RH_8BIT_DELAY);
+									break;					
+			case  SHT20_MODE2:
+									SHT20_WAIT(SHT20_RH_10BIT_DELAY);
+									break;										
+			case  SHT20_MODE3:
+									SHT20_WAIT(SHT20_RH_11BIT_DELAY);
+									break;
+		}
 		
 
 		/* check & re-try measurement ok? */
 		/* re-try = 4 */
 		for(cnt=0;cnt<4;cnt++)
+		{
+			status = SHT20_READ_COMMAND(&read_data[0]);
+			if(status!=1)
 			{
-				status = SHT20_READ_COMMAND(&read_data[0]);
-				if(status!=1)
-					{
-						SHT20_WAIT(5);	/*delay 5mS ;  unit : 1mS*/
-					}
-				else 
-					{
-					 	break;	/* read success !*/
-					}
+				SHT20_WAIT(5);	/*delay 5mS ;  unit : 1mS*/
 			}
-			if(status!=1) return -1;	/* re-try 4  -> all read fail !.*/
-
+			else 
+			{
+			 	break;	/* read success !*/
+			}
+		}
+		
+		if(status!=1) 
+		{
+			return -1;	/* re-try 4  -> all read fail !.*/
+		}
 	
 
 		/* read_data[0] -> first 	byte	MSB*/
@@ -342,11 +366,17 @@ CHAR8S SHT20_READ_HUMIDITY(FLOAT *h,CHAR8U mode)
 		/* read_data[2] -> CRC 	byte	CRC*/
 
 		/* check read_data[1] bit 1 = 0 ?  , if bit =1 -> humidity , 0 -> temperature*/
-		if(read_data[1] & 0x02 == 1) return -2;	/*is not humidity value*/
-
+		if(read_data[1] & 0x02 == 1) 
+		{
+			return -2;	/*is not humidity value*/
+		}
+		
 		status = SHT20_CRC_CHECKSUM(&read_data[0],2,read_data[2]);
-		if(status!=0) return -3;	/*CRC code match error!!*/
-
+		if(status!=0)
+		{
+			return -3;	/*CRC code match error!!*/
+		}
+		
 		/* calculate the humidity value.*/
 		/* 16bit value , MSB << left 8*/
 		humidity_data = (read_data[0] << 8) |(read_data[1] & 0xFC) ; /*0xFC mask bit 1 & bit 0*/
@@ -364,16 +394,25 @@ CHAR8S SHT20_READ_HUMIDITY(FLOAT *h,CHAR8U mode)
 /* status  if 0x00 ->  [VDD>2.25v] ; if 0x01 -> [VDD<2.25v]*/
 CHAR8S SHT20_CHECK_BATTERY_STATUS(CHAR8U *status)
 {
-		CHAR8S status_return = 0 ;
-		CHAR8U data = 0 ;
+	CHAR8S status_return = 0 ;
+	CHAR8U data = 0 ;
 
 		status_return = SHT20_RW_USER_REG(0x01,&data);
-		if(status_return!=0) return -1;	/*read command fail.*/
-
+		if(status_return!=0)
+		{ 
+			return -1;	/*read command fail.*/
+		}
 		/*check bit 6*/
-		if(data & 0x40) *status = 0x01;	/*[VDD<2.25v]*/
-	       else   *status = 0x00;	/*[VDD>2.25v]*/
-	       return 0;	/*read battery status ok!*/
+		if(data & 0x40) 
+		{
+			*status = 0x01;	/*[VDD<2.25v]*/
+		}
+		else
+		{
+			*status = 0x00;	/*[VDD>2.25v]*/
+		}
+		
+		return 0;	/*read battery status ok!*/
 }
 /* --------------------------------------------------------------------------------------------------*/
 /* --------------------------------------------------------------------------------------------------*/
@@ -381,30 +420,40 @@ CHAR8S SHT20_CHECK_BATTERY_STATUS(CHAR8U *status)
 /*  RW = 1 -> READ USER REG ; 0 -> WRITE USER REG*/
 CHAR8S SHT20_RW_USER_REG(CHAR8U rw,CHAR8U *data)
 {
-		CHAR8S status = 0 ;
-		CHAR8U temp = 0 ;
-		if(rw !=0x00 && rw!=0x01) return -2; /* error rw value*/
+	CHAR8S status = 0 ;
+	CHAR8U temp = 0 ;
 
+	
+		if(rw !=0x00 && rw!=0x01)
+		{
+			return -2; /* error rw value*/
+		}
+		
 		if(rw == 0x01) /*read user reg*/
+		{
+			//i2c_stop_hang();
+			status = i2c_read_1_byte_data(SHT20_SLAVE_ADDRESS,SHT20_READ_USER_REG,&temp);
+			if(status !=1 ) 
 			{
-				//i2c_stop_hang();
-				status = i2c_read_1_byte_data(SHT20_SLAVE_ADDRESS,SHT20_READ_USER_REG,&temp);
-				if(status !=1 ) return -1 ;/*error read fail*/
-				*data = temp;	/*read data */
-				return 0 ;	/* read success !*/
-			
+				return -1 ;/*error read fail*/
 			}
+			*data = temp;	/*read data */
+			return 0 ;	/* read success !*/
+			
+		}
 
 		if(rw == 0x00) /*write user reg*/
+		{
+			/* 0xc7 mask bit3,4,5 as 0 . Do  AND . */
+			temp = *data & 0xC7;
+			//i2c_stop_hang();				
+			status = i2c_write_1_byte_data(SHT20_SLAVE_ADDRESS,SHT20_WRITE_USER_REG,temp);
+			if(status !=1 ) 
 			{
-			
-				/* 0xc7 mask bit3,4,5 as 0 . Do  AND . */
-				temp = *data & 0xC7;
-				//i2c_stop_hang();				
-				status = i2c_write_1_byte_data(SHT20_SLAVE_ADDRESS,SHT20_WRITE_USER_REG,temp);
-				if(status !=1 ) return -1 ;	/*error read fail*/
-				return 0 ; 	/*write success !*/		
+				return -1 ;	/*error read fail*/
 			}
+			return 0 ; 	/*write success !*/		
+		}
 	
 }
 /* --------------------------------------------------------------------------------------------------*/
@@ -414,12 +463,15 @@ CHAR8S SHT20_RW_USER_REG(CHAR8U rw,CHAR8U *data)
 /*  **** use SHT20_MODE enum *****/
 CHAR8S SHT20_READ_MODE(CHAR8U *mode)
 {
-		CHAR8S status = 0;
-		CHAR8U read_mode = 0;
+	CHAR8S status = 0;
+	CHAR8U read_mode = 0;
 		
 		status  = SHT20_RW_USER_REG(0x01,&read_mode);
-		if(status!=0) return -1;
-
+		if(status!=0)
+		{
+			return -1;
+		}
+		
 		/* catch bit7 & bit 0*/
 		read_mode &= 0x81;
 		*mode = read_mode ;	/*read mode.*/
@@ -433,14 +485,20 @@ CHAR8S SHT20_READ_MODE(CHAR8U *mode)
 /*  **** use SHT20_MODE enum *****/
 CHAR8S SHT20_WRITE_MODE(CHAR8U mode)
 {
-		CHAR8S status = 0;
-		CHAR8U write_mode = 0,read_reg = 0;
+	CHAR8S status = 0;
+	CHAR8U write_mode = 0,read_reg = 0;
 	
-		if(mode != SHT20_MODE0 && mode !=SHT20_MODE1 && mode !=SHT20_MODE2 && mode !=SHT20_MODE3  )return -1;	/*error mode value*/
+		if(mode != SHT20_MODE0 && mode !=SHT20_MODE1 && mode !=SHT20_MODE2 && mode !=SHT20_MODE3  )
+		{
+			return -1;	/*error mode value*/
+		}
 		
 		status = SHT20_READ_MODE(&read_reg);	
-		if(status!=0) return -1;	/* read mode fail*/
-
+		if(status!=0)
+		{
+			return -1;	/* read mode fail*/	
+		}
+		
 		/*mask bit 7 & bit 0 */
 		read_reg&=0x7E;
 		
@@ -448,20 +506,25 @@ CHAR8S SHT20_WRITE_MODE(CHAR8U mode)
 		write_mode = read_reg | mode ;
 
 		status = SHT20_RW_USER_REG(0x00,&write_mode);
-		if(status!=0) return -1;	/* write mode fail */
-
+		if(status!=0)
+		{
+			return -1;	/* write mode fail */
+		}
 }
 /* --------------------------------------------------------------------------------------------------*/
 /* --------------------------------------------------------------------------------------------------*/
 /*  let SHT20 ""enable"" on-chip heater -> USER REG bit2*/
 CHAR8S SHT20_HEAT_IC(void)
 {
-		CHAR8S status = 0;
-		CHAR8U data = 0;
+	CHAR8S status = 0;
+	CHAR8U data = 0;
 			
 		/* read USER REG */
 		status = SHT20_RW_USER_REG(0x01,&data);
-		if(status!=0) return -1;// read fail*/
+		if(status!=0) 
+		{
+			return -1;/* read fail*/
+		}
 
 		/* mask bit 2*/
 		data&=0xFB;
@@ -471,8 +534,10 @@ CHAR8S SHT20_HEAT_IC(void)
 
 		/* write USER REG */
 		status = SHT20_RW_USER_REG(0x00,&data);
-		if(status!=0) return -1;/* write fail */	
-		
+		if(status!=0)
+		{
+			return -1;/* write fail */	
+		}
 		return 0; /* enable heat IC ok!*/
 		
 }
@@ -481,10 +546,10 @@ CHAR8S SHT20_HEAT_IC(void)
 /*  let SHT20 ""disable"" on-chip heater -> USER REG bit2*/
 CHAR8S SHT20_DIS_HEAT_IC(void)
 {
-		CHAR8S status = 0;
-		CHAR8U data = 0;
+	CHAR8S status = 0;
+	CHAR8U data = 0;
 			
-		//read USER REG */
+		/*read USER REG */
 		status = SHT20_RW_USER_REG(0x01,&data);
 		if(status!=0) return -1;/* read fail*/
 
@@ -515,19 +580,32 @@ CHAR8S SHT20_CRC_CHECKSUM(CHAR8U *data, CHAR8U bytes,CHAR8U checksum)
 	
 		/*calculates 8-Bit checksum with given polynomial */
 		for (cnt = 0; cnt<bytes; ++cnt)
-		   {
+		{
 			crc ^= (*data++);     
 					
 			for (cnt2 = 0; cnt2 < 8; ++cnt2)
 			{
-				 if (crc & 0x80) crc = ((crc << 1) ^ 0x0131);	/* 0x0131 -> Function :  x^8  + x^5 + x^4 + 1*/
-				else crc = (crc << 1);
+				 if (crc & 0x80)
+				 {
+				 	crc = ((crc << 1) ^ 0x0131);	/* 0x0131 -> Function :  x^8  + x^5 + x^4 + 1*/
+				 }
+				else 
+				{	
+					crc = (crc << 1);
+				}
 			}
-		   }
+		}
+		
 		//printf(" HTU21D_CRC_CHECKSUM 0x%x ,0x%x\r\n",checksum,crc);		   
-		if(checksum == crc) return 0;		/* crc match!*/
-		else return -3;		/*crc error!*/
- }
+		if(checksum == crc) 
+		{	
+			return 0;		/* crc match!*/
+		}
+		else
+		{
+			return -3;		/*crc error!*/
+		}
+}
 /* --------------------------------------------------------------------------------------------------*/
 /* --------------------------------------------------------------------------------------------------*/
 /*  SHT20 wait delay*/
@@ -536,7 +614,7 @@ void SHT20_WAIT(CHAR8U wait_time)
 {
 	CHAR8U	cnt = 0;
 
-	for(cnt=0;cnt<=wait_time;cnt++)
+		for(cnt=0;cnt<=wait_time;cnt++)
 		{
 			/*** Portability function here*/  
 			/*unit : ms*/
@@ -544,5 +622,4 @@ void SHT20_WAIT(CHAR8U wait_time)
 		}
 }
 /*--------------------------------------------------------------------------------------------------*/
-//********************************************* SYSTEM *************************************************
-#endif //#ifndef SHT20_FUNCTION
+/********************************************** SYSTEM **************************************************/
